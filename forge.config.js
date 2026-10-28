@@ -15,8 +15,6 @@ module.exports = {
         name: 'aims',
         setupExe: 'aims-Setup.exe',
         setupIcon: './assets/icon.ico',
-        // Squirrel auto-update: point at GitHub releases
-        remoteReleases: 'https://github.com/thinkmovesolutions/aims-desktop',
       },
     },
     {
