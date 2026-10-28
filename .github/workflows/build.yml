@@ -40,19 +40,6 @@ jobs:
       - name: Build icons
         run: node scripts/create-icons.js
 
-      # Windows: convert icon.png → icon.ico for the Squirrel installer
-      - name: Convert icon to .ico (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          Add-Type -AssemblyName System.Drawing
-          $src = [System.Drawing.Image]::FromFile("$PWD\assets\icon.png")
-          $ico = New-Object System.Drawing.Icon([System.Drawing.Icon]::FromHandle($src.GetHicon()), 256, 256)
-          $stream = [System.IO.File]::OpenWrite("$PWD\assets\icon.ico")
-          $ico.Save($stream)
-          $stream.Close()
-          $src.Dispose()
-
       - name: Make (Windows)
         if: matrix.os == 'windows-latest'
         run: npx electron-forge make --platform=win32 --arch=x64
