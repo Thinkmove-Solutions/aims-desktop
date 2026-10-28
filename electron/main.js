@@ -1,5 +1,21 @@
 'use strict';
 
+// ── Squirrel.Windows startup events (must run before anything else) ───────────
+// Squirrel fires these on install/update/uninstall — the app must quit fast or
+// the installer hangs and the app appears to never open after install.
+if (process.platform === 'win32') {
+  const squirrelEvent = process.argv[1];
+  if ([
+    '--squirrel-install',
+    '--squirrel-updated',
+    '--squirrel-uninstall',
+    '--squirrel-obsolete',
+  ].includes(squirrelEvent)) {
+    require('electron').app.quit();
+    process.exit(0);
+  }
+}
+
 process.on('uncaughtException',  (e) => console.error('[main] uncaughtException:', e.stack));
 process.on('unhandledRejection', (e) => console.error('[main] unhandledRejection:', e));
 
