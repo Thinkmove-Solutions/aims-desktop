@@ -16,8 +16,24 @@ if (process.platform === 'win32') {
   }
 }
 
-process.on('uncaughtException',  (e) => console.error('[main] uncaughtException:', e.stack));
-process.on('unhandledRejection', (e) => console.error('[main] unhandledRejection:', e));
+// ── Startup log (Windows only — helps diagnose silent crashes) ───────────────
+if (process.platform === 'win32') {
+  const logPath = require('path').join(
+    process.env.APPDATA || process.env.LOCALAPPDATA || '.', 'aims-startup.log'
+  );
+  const logLine = (msg) => {
+    try {
+      require('fs').appendFileSync(logPath, `[${new Date().toISOString()}] ${msg}\n`);
+    } catch {}
+  };
+  logLine(`Starting AIMS v${require('../package.json').version}`);
+  logLine(`args: ${process.argv.join(' ')}`);
+  process.on('uncaughtException',  (e) => { logLine(`CRASH: ${e.stack}`); console.error(e); });
+  process.on('unhandledRejection', (e) => { logLine(`REJECTION: ${e}`);   console.error(e); });
+} else {
+  process.on('uncaughtException',  (e) => console.error('[main] uncaughtException:', e.stack));
+  process.on('unhandledRejection', (e) => console.error('[main] unhandledRejection:', e));
+}
 
 const { app, BrowserWindow, ipcMain, shell, Notification, screen } = require('electron');
 const path = require('path');
