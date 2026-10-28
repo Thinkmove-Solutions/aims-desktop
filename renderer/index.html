@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
+  <title>AIMS — Settings</title>
+  <style>
+    :root {
+      --bg:      #F7F8FC;
+      --surface: #FFFFFF;
+      --border:  #D9E0EE;
+      --text:    #111827;
+      --muted:   #5C6B8A;
+      --accent:  #E07A1F;
+      --green:   #0D9488;
+      --red:     #DC2626;
+      --mono:    'Courier New', monospace;
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:      #0C1120;
+        --surface: #131C30;
+        --border:  #243150;
+        --text:    #E8EEF8;
+        --muted:   #8A9BBD;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: system-ui, sans-serif; font-size: 14px;
+      padding: 0; overflow-x: hidden;
+    }
+
+    /* ─ Header ─ */
+    .header {
+      background: #111827; color: #F9FAFB;
+      padding: 18px 24px 14px;
+      border-bottom: 2px solid var(--accent);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .header .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+    .header .sub  { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #374151; flex-shrink: 0; margin-left: auto;
+      transition: background 0.3s;
+    }
+    .status-dot.connected    { background: #10B981; box-shadow: 0 0 6px #10B981; }
+    .status-dot.connecting   { background: #F59E0B; }
+    .status-dot.disconnected { background: #EF4444; }
+
+    /* ─ Tabs ─ */
+    .tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .tab {
+      padding: 10px 20px; font-size: 13px; font-weight: 500;
+      border: none; background: none; color: var(--muted);
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ─ Panels ─ */
+    .panel { display: none; padding: 20px 24px; }
+    .panel.active { display: block; }
+
+    /* ─ Form elements ─ */
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; }
+    input[type="text"], input[type="password"], textarea {
+      width: 100%; padding: 9px 12px; border: 1px solid var(--border);
+      border-radius: 6px; background: var(--bg); color: var(--text);
+      font-size: 13px; font-family: var(--mono);
+    }
+    input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+    textarea { resize: vertical; min-height: 80px; }
+
+    .field { margin-bottom: 16px; }
+    .hint  { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    .btn {
+      padding: 9px 18px; border-radius: 6px; border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .row { display: flex; gap: 10px; align-items: center; }
+
+    /* ─ Status badge ─ */
+    .badge {
+      display: inline-block; padding: 2px 10px; border-radius: 999px;
+      font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .badge.connected    { background: rgba(16,185,129,0.15); color: #059669; }
+    .badge.connecting   { background: rgba(245,158,11,0.15); color: #D97706; }
+    .badge.disconnected { background: rgba(239,68,68,0.15);  color: #DC2626; }
+
+    /* ─ Log ─ */
+    .log-box {
+      background: #111827; color: #D1FAE5;
+      font-family: var(--mono); font-size: 11.5px; line-height: 1.5;
+      padding: 12px; border-radius: 6px; height: 130px;
+      overflow-y: auto; white-space: pre-wrap; word-break: break-all;
+    }
+    .log-warn { color: #FDE68A; }
+
+    /* ─ Toggle ─ */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between;
+                  padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .toggle-row:last-child { border: none; }
+    .toggle-label { font-size: 13.5px; font-weight: 500; }
+    .toggle-desc  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    input[type="checkbox"] { width: 36px; height: 20px; cursor: pointer; }
+
+    /* ─ Alert ─ */
+    .alert { padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 14px; }
+    .alert-ok  { background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.3); }
+    .alert-err { background: rgba(239,68,68,0.1);  color: #DC2626; border: 1px solid rgba(239,68,68,0.3); }
+    .alert[hidden] { display: none !important; }
+
+    /* ─ Printer list ─ */
+    .printer-row { display: flex; align-items: center; gap: 10px;
+                   padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .printer-row:last-child { border: none; }
+    .printer-name { font-size: 13px; font-weight: 500; flex: 1; min-width: 0; }
+    .printer-name small { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
+
+    /* ─ Display list ─ */
+    .display-row { display: flex; align-items: center; gap: 10px;
+                   padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+    .display-row:last-child { border: none; }
+    .display-row.selected { background: rgba(224,122,31,0.08); border-radius: 6px; padding-left: 8px; }
+    .display-name { font-size: 13px; font-weight: 500; flex: 1; min-width: 0; }
+    .display-name small { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
+
+    /* ─ Mode pills ─ */
+    .mode-row { display: flex; gap: 8px; margin: 12px 0; }
+    .mode-pill {
+      flex: 1; padding: 8px 6px; border-radius: 8px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--muted); font-size: 12px; font-weight: 600;
+      cursor: pointer; text-align: center;
+    }
+    .mode-pill.active { border-color: var(--accent); color: var(--accent); background: rgba(224,122,31,0.08); }
+
+    /* ─ Status chip ─ */
+    .disp-status { display: inline-flex; align-items: center; gap: 6px;
+                   font-size: 12px; font-weight: 600; padding: 3px 10px;
+                   border-radius: 999px; }
+    .disp-status.on  { background: rgba(16,185,129,0.12); color: #059669; }
+    .disp-status.off { background: rgba(100,116,139,0.12); color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">AIMS</div>
+    <div class="sub">Local print &amp; notification agent</div>
+  </div>
+  <div class="status-dot disconnected" id="statusDot"></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" data-tab="setup">Setup</button>
+  <button class="tab" data-tab="printers">Printers</button>
+  <button class="tab" data-tab="display">Display</button>
+  <button class="tab" data-tab="settings">Settings</button>
+  <button class="tab" data-tab="log">Log</button>
+</div>
+
+<!-- ── Setup tab ── -->
+<div class="panel active" id="tab-setup">
+  <div id="setupDone" hidden>
+    <div class="alert alert-ok" style="margin-bottom:16px">
+      Agent is configured. Status: <span id="statusBadge" class="badge disconnected">—</span>
+    </div>
+    <div class="row">
+      <button class="btn btn-primary" id="btnOpenAims">Open AIMS</button>
+      <button class="btn btn-ghost" id="btnRestart">Reconnect</button>
+    </div>
+  </div>
+
+  <div id="setupWizard">
+    <p style="margin-bottom:16px;font-size:13.5px;color:var(--muted)">
+      Paste the contents of your <code style="font-family:var(--mono)">agent-config.json</code>
+      from <strong>AIMS Settings → Printers → Local Print Agent</strong>.
+    </p>
+    <div class="field">
+      <label>agent-config.json contents</label>
+      <textarea id="configJson" placeholder='{"tenant_id":"...","token":"...","ws_url":"wss://..."}'></textarea>
+    </div>
+    <div id="wizardAlert" class="alert" hidden></div>
+    <button class="btn btn-primary" id="btnSaveConfig">Connect</button>
+  </div>
+</div>
+
+<!-- ── Printers tab ── -->
+<div class="panel" id="tab-printers">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <span style="font-weight:600;font-size:13.5px">OS Printers</span>
+    <button class="btn btn-ghost" id="btnRefreshPrinters" style="padding:6px 12px;font-size:12px">Refresh</button>
+  </div>
+  <div id="printerList"><p style="color:var(--muted);font-size:13px">Loading…</p></div>
+</div>
+
+<!-- ── Display tab ── -->
+<div class="panel" id="tab-display">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+    <span style="font-weight:600;font-size:13.5px">Customer Display</span>
+    <span id="dispStatusChip" class="disp-status off">Off</span>
+  </div>
+
+  <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px">
+    Choose a connected monitor to show the customer-facing display.<br>
+    The main AIMS window stays on this screen.
+  </p>
+
+  <!-- Mode selector -->
+  <label style="margin-bottom:6px">Display mode</label>
+  <div class="mode-row">
+    <button class="mode-pill active" id="modeExternal" data-mode="external">
+      Customer Display<br><span style="font-weight:400;font-size:11px">Shows /customer-display</span>
+    </button>
+    <button class="mode-pill" id="modeDuplicate" data-mode="duplicate">
+      Duplicate<br><span style="font-weight:400;font-size:11px">Mirrors AIMS app</span>
+    </button>
+  </div>
+
+  <!-- Monitor list -->
+  <label style="margin-bottom:6px;margin-top:4px">Select monitor</label>
+  <div id="displayList"><p style="color:var(--muted);font-size:13px">Detecting displays…</p></div>
+
+  <div id="dispAlert" class="alert" hidden style="margin-top:10px"></div>
+
+  <div class="row" style="margin-top:14px">
+    <button class="btn btn-primary" id="btnStartDisplay">Start Display</button>
+    <button class="btn btn-ghost"   id="btnStopDisplay" disabled>Stop Display</button>
+    <button class="btn btn-ghost"   id="btnRefreshDisplays" style="margin-left:auto;padding:6px 12px;font-size:12px">Refresh</button>
+  </div>
+</div>
+
+<!-- ── Settings tab ── -->
+<div class="panel" id="tab-settings">
+  <div class="toggle-row">
+    <div>
+      <div class="toggle-label">Start at login</div>
+      <div class="toggle-desc">Launch AIMS Desktop automatically when you log in</div>
+    </div>
+    <input type="checkbox" id="chkAutoStart">
+  </div>
+  <div class="toggle-row" style="margin-top:8px">
+    <div>
+      <div class="toggle-label">App URL</div>
+      <div class="toggle-desc">AIMS web app address (e.g. http://localhost:3000)</div>
+    </div>
+  </div>
+  <div class="field" style="margin-top:8px">
+    <input type="text" id="inputAppUrl" placeholder="https://app.aaimsoft.com">
+  </div>
+  <div class="toggle-row" style="margin-top:8px">
+    <div>
+      <div class="toggle-label">WebSocket URL</div>
+      <div class="toggle-desc">Backend WebSocket endpoint</div>
+    </div>
+  </div>
+  <div class="field" style="margin-top:8px">
+    <input type="text" id="inputWsUrl" placeholder="wss://develop-api.aaimsoft.com/ws/kds/print-agent/">
+  </div>
+  <button class="btn btn-primary" id="btnSaveSettings">Save</button>
+  <div id="settingsAlert" class="alert" hidden style="margin-top:12px"></div>
+</div>
+
+<!-- ── Log tab ── -->
+<div class="panel" id="tab-log">
+  <div class="log-box" id="logBox">Ready.\n</div>
+</div>
+
+<script>
+  const api = window.aimsAgent;
+
+  // ── Tabs ──────────────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab, .panel').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      if (btn.dataset.tab === 'printers') loadPrinters();
+    });
+  });
+
+  // ── State updates ─────────────────────────────────────────────────────────
+  function applyState(state) {
+    const dot   = document.getElementById('statusDot');
+    const badge = document.getElementById('statusBadge');
+    dot.className   = 'status-dot ' + state;
+    if (badge) { badge.className = 'badge ' + state; badge.textContent = state; }
+  }
+
+  api.onAgentState(applyState);
+
+  api.onAgentLog(({ level, msg }) => {
+    const box = document.getElementById('logBox');
+    const line = document.createElement('span');
+    if (level === 'warn') line.className = 'log-warn';
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+    box.appendChild(line);
+    box.scrollTop = box.scrollHeight;
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  api.getConfig().then(cfg => {
+    applyState(cfg.agentState);
+    if (cfg.appUrl) document.getElementById('inputAppUrl').value = cfg.appUrl;
+    if (cfg.wsUrl) document.getElementById('inputWsUrl').value = cfg.wsUrl;
+    document.getElementById('chkAutoStart').checked = cfg.autoStart;
+
+    if (cfg.hasCredentials) {
+      document.getElementById('setupWizard').hidden = true;
+      document.getElementById('setupDone').hidden = false;
+    }
+  });
+
+  // ── Setup wizard ──────────────────────────────────────────────────────────
+  document.getElementById('btnSaveConfig').addEventListener('click', async () => {
+    const raw = document.getElementById('configJson').value.trim();
+    const alertEl = document.getElementById('wizardAlert');
+    alertEl.hidden = true;
+
+    let obj;
+    try { obj = JSON.parse(raw); } catch {
+      alertEl.className = 'alert alert-err';
+      alertEl.textContent = 'Invalid JSON — paste the full agent-config.json contents.';
+      alertEl.hidden = false;
+      return;
+    }
+
+    const result = await api.importConfig(obj);
+    if (result.ok) {
+      document.getElementById('setupWizard').hidden = true;
+      document.getElementById('setupDone').hidden = false;
+    } else {
+      alertEl.className = 'alert alert-err';
+      alertEl.textContent = result.error || 'Failed to save config.';
+      alertEl.hidden = false;
+    }
+  });
+
+  document.getElementById('btnOpenAims').addEventListener('click', () => api.openAims());
+  document.getElementById('btnRestart').addEventListener('click', () => api.restartAgent());
+
+  // ── Settings ──────────────────────────────────────────────────────────────
+  document.getElementById('btnSaveSettings').addEventListener('click', async () => {
+    const alertEl = document.getElementById('settingsAlert');
+    await api.saveConfig({
+      autoStart: document.getElementById('chkAutoStart').checked,
+      appUrl:    document.getElementById('inputAppUrl').value.trim() || undefined,
+      wsUrl:     document.getElementById('inputWsUrl').value.trim(),
+    });
+    alertEl.className = 'alert alert-ok';
+    alertEl.textContent = 'Saved.';
+    alertEl.hidden = false;
+    setTimeout(() => { alertEl.hidden = true; }, 2000);
+  });
+
+  // ── Printers ──────────────────────────────────────────────────────────────
+  async function loadPrinters() {
+    const list = document.getElementById('printerList');
+    list.innerHTML = '<p style="color:var(--muted);font-size:13px">Loading…</p>';
+    const printers = await api.getPrinters();
+    if (!printers.length) {
+      list.innerHTML = '<p style="color:var(--muted);font-size:13px">No printers found.</p>';
+      return;
+    }
+    list.innerHTML = printers.map(p => `
+      <div class="printer-row">
+        <div class="printer-name">
+          ${p.displayName || p.name}
+          <small>${p.name}${p.isDefault ? ' · Default' : ''}</small>
+        </div>
+        <span class="badge ${p.status === 0 ? 'connected' : 'disconnected'}">${p.status === 0 ? 'Ready' : 'Offline'}</span>
+      </div>
+    `).join('');
+  }
+
+  document.getElementById('btnRefreshPrinters').addEventListener('click', loadPrinters);
+
+  // ── Customer Display ──────────────────────────────────────────────────────
+  let selectedDisplayId = null;
+  let currentMode = 'external';
+
+  function setDispStatus(open) {
+    const chip = document.getElementById('dispStatusChip');
+    chip.className = 'disp-status ' + (open ? 'on' : 'off');
+    chip.textContent = open ? 'Running' : 'Off';
+    document.getElementById('btnStartDisplay').disabled = open;
+    document.getElementById('btnStopDisplay').disabled  = !open;
+  }
+
+  function renderDisplayList(displays) {
+    const list = document.getElementById('displayList');
+    if (!displays.length) {
+      list.innerHTML = '<p style="color:var(--muted);font-size:13px">No displays detected.</p>';
+      return;
+    }
+    list.innerHTML = displays.map(d => `
+      <div class="display-row${d.id === selectedDisplayId ? ' selected' : ''}"
+           data-id="${d.id}" onclick="selectDisplay('${d.id}')">
+        <div class="display-name">
+          ${d.label}
+          <small>${d.isPrimary ? 'Primary (this screen)' : 'External monitor'}</small>
+        </div>
+        ${d.id === selectedDisplayId ? '<span class="badge connected">Selected</span>' : ''}
+      </div>
+    `).join('');
+  }
+
+  function selectDisplay(id) {
+    selectedDisplayId = id;
+    // re-render to show selection
+    api.getDisplays().then(renderDisplayList);
+  }
+  window.selectDisplay = selectDisplay;
+
+  function setMode(mode) {
+    currentMode = mode;
+    document.querySelectorAll('.mode-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.mode === mode);
+    });
+    api.setCustomerDisplayMode(mode);
+  }
+
+  document.querySelectorAll('.mode-pill').forEach(pill => {
+    pill.addEventListener('click', () => setMode(pill.dataset.mode));
+  });
+
+  async function loadDisplays() {
+    const displays = await api.getDisplays();
+    // Auto-select first non-primary if nothing selected yet
+    if (!selectedDisplayId) {
+      const ext = displays.find(d => !d.isPrimary);
+      if (ext) selectedDisplayId = ext.id;
+    }
+    renderDisplayList(displays);
+  }
+
+  async function initDisplayTab() {
+    const [displays, status] = await Promise.all([api.getDisplays(), api.getCustomerDisplayStatus()]);
+    selectedDisplayId = status.displayId || null;
+    setMode(status.mode || 'external');
+    setDispStatus(status.open);
+    if (!selectedDisplayId) {
+      const ext = displays.find(d => !d.isPrimary);
+      if (ext) selectedDisplayId = ext.id;
+    }
+    renderDisplayList(displays);
+  }
+
+  document.getElementById('btnStartDisplay').addEventListener('click', async () => {
+    const alertEl = document.getElementById('dispAlert');
+    alertEl.hidden = true;
+    const result = await api.openCustomerDisplay(selectedDisplayId);
+    if (result.ok) {
+      setDispStatus(true);
+    } else {
+      alertEl.className = 'alert alert-err';
+      alertEl.textContent = result.error || 'Could not open display.';
+      alertEl.hidden = false;
+    }
+  });
+
+  document.getElementById('btnStopDisplay').addEventListener('click', async () => {
+    await api.closeCustomerDisplay();
+    setDispStatus(false);
+  });
+
+  document.getElementById('btnRefreshDisplays').addEventListener('click', loadDisplays);
+
+  // Listen for display connect/disconnect events from main process
+  api.onDisplaysChanged(displays => {
+    renderDisplayList(displays);
+  });
+
+  // Load display tab when it becomes active
+  document.querySelectorAll('.tab').forEach(btn => {
+    if (btn.dataset.tab === 'display') {
+      btn.addEventListener('click', initDisplayTab);
+    }
+  });
+</script>
+</body>
+</html>
