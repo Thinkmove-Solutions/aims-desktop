@@ -1,7 +1,7 @@
 {
   "name": "aims-desktop",
   "productName": "AIMS",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "AIMS local desktop agent — print, notifications, native OS integration",
   "main": "electron/main.js",
   "scripts": {

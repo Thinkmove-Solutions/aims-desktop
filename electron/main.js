@@ -47,7 +47,7 @@ const { setAutoStart } = require('./auto-start');
 
 // Auto-update — only active in packaged production builds (not npm start)
 if (app.isPackaged) {
-  require('update-electron-app')({ updateInterval: '1 hour' });
+  require('update-electron-app').updateElectronApp({ updateInterval: '1 hour' });
 }
 
 // ── Single instance lock ──────────────────────────────────────────────────────
@@ -275,16 +275,24 @@ function openSettings() {
   const iconP = path.join(__dirname, '..', 'assets', 'icon.png');
 
   settingsWin = new BrowserWindow({
-    width:     520,
-    height:    620,
-    resizable: false,
-    title:     'AIMS — Settings',
-    icon:      fs.existsSync(iconP) ? iconP : undefined,
+    width:       520,
+    height:      620,
+    resizable:   false,
+    title:       'AIMS — Settings',
+    icon:        fs.existsSync(iconP) ? iconP : undefined,
+    alwaysOnTop: true,
     webPreferences: {
       preload:          path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration:  false,
     },
+  });
+
+  // Pop to front once, then release always-on-top so the user can move it behind other windows
+  settingsWin.once('ready-to-show', () => {
+    settingsWin.show();
+    settingsWin.focus();
+    setTimeout(() => { if (settingsWin && !settingsWin.isDestroyed()) settingsWin.setAlwaysOnTop(false); }, 2000);
   });
 
   settingsWin.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
