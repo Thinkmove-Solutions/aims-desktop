@@ -10,6 +10,9 @@ on:
         description: 'Tag to build (e.g. v1.0.2)'
         required: true
 
+permissions:
+  contents: write
+
 # Resolve the tag name regardless of how the workflow was triggered
 env:
   RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
