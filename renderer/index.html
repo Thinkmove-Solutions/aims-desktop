@@ -182,6 +182,7 @@
     <div class="row">
       <button class="btn btn-primary" id="btnOpenAims">Open AIMS</button>
       <button class="btn btn-ghost" id="btnRestart">Reconnect</button>
+      <button class="btn btn-ghost" id="btnReconfigure" style="margin-left:auto">Re-configure</button>
     </div>
   </div>
 
@@ -269,7 +270,7 @@
     </div>
   </div>
   <div class="field" style="margin-top:8px">
-    <input type="text" id="inputWsUrl" placeholder="wss://develop-api.aaimsoft.com/ws/kds/print-agent/">
+    <input type="text" id="inputWsUrl" placeholder="wss://api.aaimsoft.com/ws/kds/print-agent/">
   </div>
   <button class="btn btn-primary" id="btnSaveSettings">Save</button>
   <div id="settingsAlert" class="alert" hidden style="margin-top:12px"></div>
@@ -352,6 +353,12 @@
 
   document.getElementById('btnOpenAims').addEventListener('click', () => api.openAims());
   document.getElementById('btnRestart').addEventListener('click', () => api.restartAgent());
+  document.getElementById('btnReconfigure').addEventListener('click', () => {
+    document.getElementById('setupDone').hidden = true;
+    document.getElementById('setupWizard').hidden = false;
+    document.getElementById('configJson').value = '';
+    document.getElementById('wizardAlert').hidden = true;
+  });
 
   // ── Settings ──────────────────────────────────────────────────────────────
   document.getElementById('btnSaveSettings').addEventListener('click', async () => {

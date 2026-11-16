@@ -13,8 +13,12 @@ module.exports = {
       name: '@electron-forge/maker-squirrel',
       config: {
         name: 'aims',
-        setupExe: 'aims-Setup.exe',
+        setupExe: 'AIMS-Setup.exe',
         setupIcon: './assets/icon.ico',
+        shortcutName: 'AIMS',
+        description: 'AIMS — Point of Sale & Restaurant Management',
+        // Creates Desktop + Start Menu shortcuts on install; removes on uninstall
+        // (handled by electron-squirrel-startup in main.js)
       },
     },
     {

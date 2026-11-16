@@ -1,19 +1,12 @@
 'use strict';
 
 // ── Squirrel.Windows startup events (must run before anything else) ───────────
-// Squirrel fires these on install/update/uninstall — the app must quit fast or
-// the installer hangs and the app appears to never open after install.
-if (process.platform === 'win32') {
-  const squirrelEvent = process.argv[1];
-  if ([
-    '--squirrel-install',
-    '--squirrel-updated',
-    '--squirrel-uninstall',
-    '--squirrel-obsolete',
-  ].includes(squirrelEvent)) {
-    require('electron').app.quit();
-    process.exit(0);
-  }
+// electron-squirrel-startup handles install/update/uninstall events, creates
+// Desktop and Start Menu shortcuts on install/update, and removes them on
+// uninstall. Returns true when it handled an event (app must quit immediately).
+if (require('electron-squirrel-startup')) {
+  require('electron').app.quit();
+  process.exit(0);
 }
 
 // ── Startup log (Windows only — helps diagnose silent crashes) ───────────────
@@ -88,6 +81,13 @@ function notifyDisplaysChanged() {
   }
 }
 
+function autoOpenCustomerDisplay() {
+  if (customerDisplayWin && !customerDisplayWin.isDestroyed()) return;
+  const primary = screen.getPrimaryDisplay();
+  const extended = screen.getAllDisplays().find(d => d.id !== primary.id);
+  if (extended) createCustomerDisplayWindow(String(extended.id));
+}
+
 function closeCustomerDisplay() {
   if (customerDisplayWin && !customerDisplayWin.isDestroyed()) customerDisplayWin.destroy();
   customerDisplayWin = null;
@@ -112,7 +112,7 @@ function createCustomerDisplayWindow(displayId) {
   if (!target) target = primary;
 
   const { x, y, width, height } = target.bounds;
-  const baseUrl = cfg.appUrl || 'https://develop.aaimsoft.com';
+  const baseUrl = cfg.appUrl || 'https://app.aaimsoft.com';
   const mode    = cfg.customerDisplayMode || 'external';
   const url     = mode === 'duplicate' ? baseUrl : `${baseUrl}/customer-display`;
 
@@ -138,8 +138,8 @@ function createCustomerDisplayWindow(displayId) {
 // ── App lifecycle ─────────────────────────────────────────────────────────────
 
 app.whenReady().then(async () => {
-  screen.on('display-added',          notifyDisplaysChanged);
-  screen.on('display-removed',        notifyDisplaysChanged);
+  screen.on('display-added', () => { notifyDisplaysChanged(); autoOpenCustomerDisplay(); });
+  screen.on('display-removed',         notifyDisplaysChanged);
   screen.on('display-metrics-changed', notifyDisplaysChanged);
 
   // Tray icon — shows agent status, gives access to Settings and Quit
@@ -183,6 +183,8 @@ app.whenReady().then(async () => {
     openSettings();
   } else {
     createMainWindow();
+    // Auto-open customer display on extended monitor if one is present
+    autoOpenCustomerDisplay();
   }
 
   // Start print agent if already configured
@@ -230,11 +232,17 @@ function showPrimaryWindow() {
 function createMainWindow() {
   if (mainWin) { mainWin.show(); mainWin.focus(); return; }
 
-  const iconP = path.join(__dirname, '..', 'assets', 'icon.png');
+  const iconP   = path.join(__dirname, '..', 'assets', 'icon.png');
+  const primary = screen.getPrimaryDisplay();
+  const { x: wa_x, y: wa_y, width: wa_w, height: wa_h } = primary.workArea;
+  const winW = Math.min(1280, wa_w);
+  const winH = Math.min(800,  wa_h);
 
   mainWin = new BrowserWindow({
-    width:     1280,
-    height:    800,
+    x:         Math.round(wa_x + (wa_w - winW) / 2),
+    y:         Math.round(wa_y + (wa_h - winH) / 2),
+    width:     winW,
+    height:    winH,
     minWidth:  900,
     minHeight: 600,
     title:     'AIMS — Main',
@@ -311,6 +319,8 @@ function startAgent() {
   const { wsUrl } = store.getConfig();
   const token = store.loadToken();
   if (!token || !wsUrl) return;
+
+  agent.removeAllListeners();
 
   agent.on('state', (state) => {
     updateTrayState(state);
@@ -408,7 +418,7 @@ ipcMain.handle('set-customer-display-mode', (_event, mode) => {
   // Reload if already open so the URL updates immediately
   if (customerDisplayWin && !customerDisplayWin.isDestroyed()) {
     const cfg     = store.getConfig();
-    const baseUrl = cfg.appUrl || 'https://develop.aaimsoft.com';
+    const baseUrl = cfg.appUrl || 'https://app.aaimsoft.com';
     const url     = mode === 'duplicate' ? baseUrl : `${baseUrl}/customer-display`;
     customerDisplayWin.loadURL(url);
   }
