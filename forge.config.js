@@ -37,7 +37,7 @@ module.exports = {
       config: {
         options: {
           maintainer: 'Thinkmove Solutions',
-          homepage: 'https://app.aaimsoft.com',
+          homepage: 'https://aaimsoft.com',
           description: 'AIMS local desktop agent for print and native OS integration',
         },
       },

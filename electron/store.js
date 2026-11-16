@@ -8,14 +8,15 @@ const store = new Store({
   name: 'aims-config',
   // cwd defaults to the app's userData dir, which uses productName ("AIMS")
   defaults: {
-    appUrl: 'https://app.aaimsoft.com',
+    appUrl: 'https://aaimsoft.com',
     wsUrl: 'wss://api.aaimsoft.com/ws/kds/print-agent/',
     tenantId: null,
     autoStart: false,
     customerDisplayMode: 'external',
     customerDisplayId:   null,
     allowedOrigins: [
-      'https://app.aaimsoft.com',
+      'https://aaimsoft.com',
+      'https://www.aaimsoft.com',
       'http://localhost:3000',
     ],
     localApiPort: 27152,

@@ -112,7 +112,7 @@ function createCustomerDisplayWindow(displayId) {
   if (!target) target = primary;
 
   const { x, y, width, height } = target.bounds;
-  const baseUrl = cfg.appUrl || 'https://app.aaimsoft.com';
+  const baseUrl = cfg.appUrl || 'https://aaimsoft.com';
   const mode    = cfg.customerDisplayMode || 'external';
   const url     = mode === 'duplicate' ? baseUrl : `${baseUrl}/customer-display`;
 
@@ -255,7 +255,7 @@ function createMainWindow() {
     },
   });
 
-  const appUrl = store.getConfig().appUrl || 'https://app.aaimsoft.com';
+  const appUrl = store.getConfig().appUrl || 'https://aaimsoft.com';
   mainWin.loadURL(appUrl);
 
   // Open external links (target=_blank) in the system browser, not a new window
@@ -418,7 +418,7 @@ ipcMain.handle('set-customer-display-mode', (_event, mode) => {
   // Reload if already open so the URL updates immediately
   if (customerDisplayWin && !customerDisplayWin.isDestroyed()) {
     const cfg     = store.getConfig();
-    const baseUrl = cfg.appUrl || 'https://app.aaimsoft.com';
+    const baseUrl = cfg.appUrl || 'https://aaimsoft.com';
     const url     = mode === 'duplicate' ? baseUrl : `${baseUrl}/customer-display`;
     customerDisplayWin.loadURL(url);
   }
